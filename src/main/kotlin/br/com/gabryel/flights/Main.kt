@@ -6,22 +6,33 @@ import br.com.gabryel.flights.common.Edge
 import br.com.gabryel.flights.common.RouteManager
 import br.com.gabryel.flights.rest.RestClient
 import java.io.File
+import java.io.InputStream
 
 fun main(args: Array<String>) {
-    val file = args.first()
-    val routeManager = RouteManager(getLines(file).toMutableMap())
+    val inputStream = getInputStream(args.firstOrNull())
+    val routeManager = RouteManager(getLines(inputStream).toMutableMap())
 
     val clients = listOf(CliClient(routeManager), RestClient(routeManager))
 
     clients.forEach(Client::start)
 
-    while (true) { }
+    try {
+        while (true) { }
+    } catch (e: InterruptedException) {
+        clients.forEach(Client::stop)
+    }
 }
 
-private fun getLines(file: String): Map<String, List<Edge>> {
-    return File(file).readLines().map {
+private fun getInputStream(file: String?): InputStream {
+    if (file.isNullOrEmpty())
+        return Client::javaClass.javaClass.getResourceAsStream("/default.csv")
+
+    return File(file).inputStream()
+}
+
+private fun getLines(stream: InputStream): Map<String, List<Edge>> =
+    stream.reader().readLines().map {
         val (origin, end, value) = it.split(",")
 
         origin to (end to Integer.valueOf(value))
     }.groupBy({ it.first }) { it.second }
-}

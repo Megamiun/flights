@@ -30,16 +30,16 @@ class RouteManager(private val routes: MutableMap<String, List<Edge>>) {
             toVisit -= current
 
             routes[current]?.forEach { (next, distance) ->
-                distances.updateDistanceFor(next, currentData.second + distance)
+                distances.updateDistanceFor(next, currentData, distance)
             }
         }
 
         return null
     }
 
-    private fun MutableMap<String, Edge>.updateDistanceFor(next: String, newDistance: Int) {
-        compute(next) { key, old ->
-            val newPath = key to newDistance
+    private fun MutableMap<String, Edge>.updateDistanceFor(next: String, current: Edge, distance: Int) {
+        compute(next) { _, old ->
+            val newPath = current.first to distance + current.second
             old ?: return@compute newPath
 
             if (old.second < newPath.second) old
@@ -53,8 +53,6 @@ class RouteManager(private val routes: MutableMap<String, List<Edge>>) {
 
         if (current == start) return Route(tail, start)
 
-        return mountRoute(start, node.first, distances,
-            Route(tail, current)
-        )
+        return mountRoute(start, node.first, distances, Route(tail, current))
     }
 }

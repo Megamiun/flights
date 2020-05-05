@@ -6,13 +6,18 @@ import br.com.gabryel.flights.common.RouteManager
 import br.com.gabryel.flights.rest.model.AddRouteRequest
 import br.com.gabryel.flights.rest.model.PathRequest
 import br.com.gabryel.flights.rest.model.PathResponse
+import br.com.gabryel.flights.rest.model.InputError
 import com.google.gson.Gson
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
+import java.nio.charset.Charset
 import java.util.concurrent.Executors
 
-class RestClient(private val routeManager: RouteManager): Client {
+class RestClient(
+    private val routeManager: RouteManager,
+    private val defaultCharset: Charset = Charsets.ISO_8859_1
+): Client {
 
     private val gson = Gson()
 
@@ -20,7 +25,7 @@ class RestClient(private val routeManager: RouteManager): Client {
 
     override fun start() = server.start()
 
-    override fun finish() = server.stop(0)
+    override fun stop() = server.stop(0)
 
     private fun createServer(): HttpServer {
         val serverPort = 8000
@@ -36,7 +41,6 @@ class RestClient(private val routeManager: RouteManager): Client {
         }
 
         server.executor = Executors.newCachedThreadPool()
-
         return server
     }
 
@@ -62,14 +66,14 @@ class RestClient(private val routeManager: RouteManager): Client {
 
     private fun HttpExchange.insert(origin: String? = null, end: String? = null, priceString: String? = null) {
         if (origin.isNullOrBlank() || end.isNullOrBlank() || priceString.isNullOrBlank()) {
-            writeObject(400, Error("No 'origin' or 'end' or 'price' parameter was given"))
+            writeObject(400, InputError("No 'origin' or 'end' or 'price' parameter was given"))
             return
         }
 
         val price = Integer.getInteger(priceString)
 
         if (price == null) {
-            writeObject(400, Error("No numerical 'price' was given"))
+            writeObject(400, InputError("No numerical 'price' was given"))
             return
         }
 
@@ -79,7 +83,7 @@ class RestClient(private val routeManager: RouteManager): Client {
 
     private fun HttpExchange.answerWithPath(origin: String? = null, end: String? = null) {
         if (origin.isNullOrBlank() || end.isNullOrBlank()) {
-            writeObject(400, Error("No 'origin' or 'end' parameter was given"))
+            writeObject(400, InputError("No 'origin' or 'end' parameter was given"))
             return
         }
 
@@ -94,7 +98,7 @@ class RestClient(private val routeManager: RouteManager): Client {
         val price = result.second
         val path = route.asSequence().toList().map(Route::value)
 
-        writeObject(200, PathResponse(path, getFormattedString(route, price), price))
+        writeObject(200, PathResponse(path, route.getFormattedRouteFor(price), price))
     }
 
     private fun <T> HttpExchange.writeObject(status: Int, message: T? = null) {
@@ -103,20 +107,22 @@ class RestClient(private val routeManager: RouteManager): Client {
             return
         }
 
-        write(status, gson.toJson(message).toByteArray())
+        write(status, gson.toJson(message).toByteArray(defaultCharset))
     }
 
-    private fun HttpExchange.write(status: Int, bytes: ByteArray = ByteArray(0)) {
-        sendResponseHeaders(status, bytes.size.toLong())
+    private fun HttpExchange.write(
+        status: Int,
+        bytes: ByteArray = ByteArray(0),
+        charset: Charset = defaultCharset,
+        contentType: String = "application/json"
+    ) {
+        responseHeaders.set("content-type", "$contentType; charset=${charset.displayName()}")
+        sendResponseHeaders(status, getLength(bytes))
         responseBody.write(bytes)
         responseBody.close()
     }
 
-    private fun getFormattedString(route: Route, value: Int): String {
-        val path = route.asSequence().joinToString(" - ") { it.value }
-
-        return "$path > $value"
-    }
+    private fun getLength(bytes: ByteArray) = if (bytes.isNotEmpty()) bytes.size.toLong() else -1
 
     private fun findParameter(query: List<String>, parameter: String) =
         query.firstOrNull { it.startsWith(parameter) }.orEmpty()
