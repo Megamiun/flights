@@ -96,7 +96,7 @@ class RestClient(
 
         val route = result.first
         val price = result.second
-        val path = route.asSequence().toList().map(Route::value)
+        val path = route.asSequence().toList()
 
         writeObject(200, PathResponse(path, route.getFormattedRouteFor(price), price))
     }

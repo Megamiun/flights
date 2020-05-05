@@ -2,7 +2,7 @@ package br.com.gabryel.flights.common
 
 typealias Edge = Pair<String, Int>
 
-class RouteManager(private val routes: MutableMap<String, List<Edge>>) {
+class RouteManager(private val routes: MutableMap<String, List<Edge>> = mutableMapOf()) {
 
     fun insertRoute(origin: String, end: String, price: Int) {
         routes.compute(origin) { _, old ->
@@ -15,11 +15,15 @@ class RouteManager(private val routes: MutableMap<String, List<Edge>>) {
 
     fun findRoute(origin: String, end: String): Pair<Route, Int>? {
         val distances = mutableMapOf(origin to (origin to 0))
-        val toVisit = routes.keys.toMutableSet()
+        val toVisit = mutableSetOf(origin)
+        val visited = mutableSetOf<String>()
 
         while (toVisit.isNotEmpty()) {
             val current = toVisit.minBy { distances[it]?.second?: Int.MAX_VALUE }
                 ?: return null
+
+            visited += current
+            toVisit -= current
 
             val currentData = distances[current]
                 ?: return null
@@ -27,19 +31,20 @@ class RouteManager(private val routes: MutableMap<String, List<Edge>>) {
             if (current == end)
                 return mountRoute(origin, end, distances)?.let { it to currentData.second }
 
-            toVisit -= current
-
-            routes[current]?.forEach { (next, distance) ->
-                distances.updateDistanceFor(next, currentData, distance)
-            }
+            routes[current]
+                ?.filterNot { it.first in visited }
+                ?.forEach { (next, distance) ->
+                    toVisit += next
+                    distances.updateDistanceFor(next, current, distance + currentData.second)
+                }
         }
 
         return null
     }
 
-    private fun MutableMap<String, Edge>.updateDistanceFor(next: String, current: Edge, distance: Int) {
+    private fun MutableMap<String, Edge>.updateDistanceFor(next: String, current: String, distance: Int) {
         compute(next) { _, old ->
-            val newPath = current.first to distance + current.second
+            val newPath = current to distance
             old ?: return@compute newPath
 
             if (old.second < newPath.second) old
@@ -51,8 +56,8 @@ class RouteManager(private val routes: MutableMap<String, List<Edge>>) {
         val node = distances[current]
             ?: return null
 
-        if (current == start) return Route(tail, start)
+        if (current == start) return Route(start, tail)
 
-        return mountRoute(start, node.first, distances, Route(tail, current))
+        return mountRoute(start, node.first, distances, Route(current, tail))
     }
 }
