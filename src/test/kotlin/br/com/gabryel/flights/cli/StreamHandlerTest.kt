@@ -1,11 +1,10 @@
 package br.com.gabryel.flights.cli
 
-import br.com.gabryel.flights.common.BacktrackPath
+import br.com.gabryel.flights.common.Path
 import br.com.gabryel.flights.common.RouteManager
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
@@ -44,7 +43,7 @@ class StreamHandlerTest {
         val input = "A-B".byteInputStream()
 
         val routeManager = mock<RouteManager> {
-            on { findRoute("A", "B") } doReturn BacktrackPath("B", 0, BacktrackPath("A", 1))
+            on { findRoute("A", "B") } doReturn Path("B", 0, Path("A", 1))
         }
 
         StreamHandler(routeManager, input, output).execute()

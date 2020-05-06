@@ -1,6 +1,6 @@
 package br.com.gabryel.flights.server
 
-import br.com.gabryel.flights.common.BacktrackPath
+import br.com.gabryel.flights.common.Path
 import br.com.gabryel.flights.common.Edge
 import br.com.gabryel.flights.common.RouteManager
 import br.com.gabryel.flights.rest.RoutesHandler
@@ -73,7 +73,7 @@ class RoutesHandlerTest {
         val exchange = createExchange("GET", "api/routes?origin=A&end=B", sendResponseHeaders = hook)
 
         val routeManager = mock<RouteManager> {
-            on { findRoute("A", "B") } doReturn BacktrackPath("A", 1, BacktrackPath("B", 0))
+            on { findRoute("A", "B") } doReturn Path("A", 1, Path("B", 0))
         }
 
         RoutesHandler(routeManager).handle(exchange)
@@ -87,7 +87,7 @@ class RoutesHandlerTest {
         val exchange = createExchange("GET", "api/routes?origin=A&end=B", responseBodyStream = stream)
 
         val routeManager = mock<RouteManager> {
-            on { findRoute("A", "B") } doReturn BacktrackPath("B", 1, BacktrackPath("A", 0))
+            on { findRoute("A", "B") } doReturn Path("B", 1, Path("A", 0))
         }
 
         RoutesHandler(routeManager).handle(exchange)
@@ -108,7 +108,7 @@ class RoutesHandlerTest {
         val exchange = createExchange("POST", "api/routes", responseBodyStream = output, requestBodyString = input)
 
         val routeManager = mock<RouteManager> {
-            on { findRoute("A", "B") } doReturn BacktrackPath("B", 1, BacktrackPath("A", 0))
+            on { findRoute("A", "B") } doReturn Path("B", 1, Path("A", 0))
         }
 
         RoutesHandler(routeManager).handle(exchange)

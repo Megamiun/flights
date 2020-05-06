@@ -23,8 +23,8 @@ class RouteManager(private val output: OutputStream) {
         insert(edge.point2, edge.point1, edge)
     }
 
-    fun findRoute(origin: String, end: String): BacktrackPath? {
-        val distances = mutableMapOf(origin to BacktrackPath(origin, 0))
+    fun findRoute(origin: String, end: String): Path? {
+        val distances = mutableMapOf(origin to Path(origin, 0))
         val toVisit = routesCache.keys.toMutableSet()
 
         if (origin !in toVisit || end !in toVisit)
@@ -51,9 +51,9 @@ class RouteManager(private val output: OutputStream) {
         return null
     }
 
-    private fun MutableMap<String, BacktrackPath>.updatePathFor(nextNode: String, nextNodePrice: Int, currentPath: BacktrackPath) {
+    private fun MutableMap<String, Path>.updatePathFor(nextNode: String, nextNodePrice: Int, currentPath: Path) {
         compute(nextNode) { _, oldPath ->
-            val newPath = BacktrackPath(nextNode, nextNodePrice, currentPath)
+            val newPath = Path(nextNode, nextNodePrice, currentPath)
             oldPath ?: return@compute newPath
 
             if (oldPath.price < newPath.price) oldPath

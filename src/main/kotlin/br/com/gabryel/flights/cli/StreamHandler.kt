@@ -1,10 +1,8 @@
 package br.com.gabryel.flights.cli
 
-import br.com.gabryel.flights.common.BacktrackPath
 import br.com.gabryel.flights.common.RouteManager
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.*
 
 class StreamHandler(
     private val routeManager: RouteManager,
@@ -15,7 +13,7 @@ class StreamHandler(
         fun cliHandler(routeManager: RouteManager) = StreamHandler(routeManager, System.`in`, System.out)
     }
 
-    private val scanner = Scanner(inputStream)
+    private val reader = inputStream.bufferedReader()
     private val writer = outputStream.bufferedWriter()
 
     fun execute() {
@@ -23,7 +21,7 @@ class StreamHandler(
             writer.append("Please enter the route: ")
             writer.flush()
 
-            val (origin, end) = scanner.nextLine().split("-")
+            val (origin, end) = reader.readLine().split("-")
 
             val path = routeManager.findRoute(origin, end)?.getFormattedPath()
 
@@ -35,8 +33,4 @@ class StreamHandler(
 
         writer.flush()
     }
-
-    private fun BacktrackPath?.asString() =
-        this?.getFormattedPath()
-            ?: "There is no route between the two points. Is there another route you would like to know?"
 }

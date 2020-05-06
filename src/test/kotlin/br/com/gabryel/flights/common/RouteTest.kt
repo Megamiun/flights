@@ -9,14 +9,14 @@ class RouteTest {
 
     @Test
     fun `given there are x levels of routes, when asked for their sequence, should return a list with x items`() {
-        val route = BacktrackPath("A", 0, BacktrackPath("B", 0, BacktrackPath("C", 0)))
+        val route = Path("A", 0, Path("B", 0, Path("C", 0)))
 
         assertThat(route.asList().toList(), hasItems("A", "B", "C"))
     }
 
     @Test
     fun `given there are x levels of routes, when asked for their string representation, should concatenate in order`() {
-        val route = BacktrackPath("A", 1, BacktrackPath("B", 2, BacktrackPath("C", 3)))
+        val route = Path("A", 1, Path("B", 2, Path("C", 3)))
 
         assertThat(route.getFormattedPath(), `is`("C - B - A > \$6"))
     }
