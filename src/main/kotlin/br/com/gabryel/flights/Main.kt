@@ -9,11 +9,10 @@ import br.com.gabryel.flights.rest.RestServer
 import br.com.gabryel.flights.rest.RoutesHandler
 import java.io.File
 import java.io.InputStream
-import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    val inputStream = getInputStream(args.firstOrNull())
-    val routeManager = RouteManager.with(getLines(inputStream))
+    val file = getFile(args.firstOrNull())
+    val routeManager = RouteManager.with(getLines(file.inputStream()), file.outputStream())
 
     val clients = listOf(StreamServer(StreamHandler.cliHandler(routeManager)), RestServer(RoutesHandler(routeManager)))
     clients.forEach(Server::start)
@@ -25,11 +24,16 @@ fun main(args: Array<String>) {
     }
 }
 
-private fun getInputStream(file: String?): InputStream {
-    if (file.isNullOrEmpty())
-        return Server::class.java.getResourceAsStream("/default.csv")
+private fun getFile(file: String?): File {
+    if (file.isNullOrEmpty()) {
+        Server::class.java.getResourceAsStream("/default.csv").use {
+            val tempFile = File.createTempFile("flights", ".csv")
+            tempFile.writeBytes(it.readBytes())
+            return tempFile
+        }
+    }
 
-    return File(file).inputStream()
+    return File(file)
 }
 
 private fun getLines(stream: InputStream): List<Edge> =

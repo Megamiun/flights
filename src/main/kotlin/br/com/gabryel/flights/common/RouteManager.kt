@@ -1,25 +1,31 @@
 package br.com.gabryel.flights.common
 
-class RouteManager {
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 
-    private val routes: MutableMap<String, MutableMap<String, MutableList<Edge>>> = mutableMapOf()
+class RouteManager(private val output: OutputStream) {
+
+    private val routesCache: MutableMap<String, MutableMap<String, MutableList<Edge>>> = mutableMapOf()
 
     companion object {
-        fun with(routes: List<Edge>): RouteManager {
-            val manager = RouteManager()
+        fun with(routes: List<Edge>, output: OutputStream = ByteArrayOutputStream()): RouteManager {
+            val manager = RouteManager(output)
             routes.forEach(manager::insertRoute)
             return manager
         }
     }
 
     fun insertRoute(edge: Edge) {
+        output.write("${edge.point1},${edge.point2},${edge.price}\n".toByteArray())
+        output.flush()
+        
         insert(edge.point1, edge.point2, edge)
         insert(edge.point2, edge.point1, edge)
     }
 
     fun findRoute(origin: String, end: String): BacktrackPath? {
         val distances = mutableMapOf(origin to BacktrackPath(origin, 0))
-        val toVisit = routes.keys.toMutableSet()
+        val toVisit = routesCache.keys.toMutableSet()
 
         if (origin !in toVisit || end !in toVisit)
             return null
@@ -34,7 +40,7 @@ class RouteManager {
             if (current == end)
                 return currentData
 
-            routes[current]
+            routesCache[current]
                 ?.filter { it.key in toVisit }
                 ?.flatMap { (next, edges) -> edges.map { edge -> next to edge } }
                 ?.forEach { (next, edge) ->
@@ -56,7 +62,7 @@ class RouteManager {
     }
 
     private fun insert(origin: String, end: String, edge: Edge) {
-        routes
+        routesCache
             .getOrPut(origin) { mutableMapOf() }
             .getOrPut(end) { mutableListOf() }
             .add(edge)
