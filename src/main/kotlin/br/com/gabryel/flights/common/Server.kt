@@ -1,6 +1,6 @@
 package br.com.gabryel.flights.common
 
-interface Client {
+interface Server {
     fun start()
 
     fun stop()

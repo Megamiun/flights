@@ -1,63 +1,64 @@
 package br.com.gabryel.flights.common
 
-typealias Edge = Pair<String, Int>
+class RouteManager {
 
-class RouteManager(private val routes: MutableMap<String, List<Edge>> = mutableMapOf()) {
+    private val routes: MutableMap<String, MutableMap<String, MutableList<Edge>>> = mutableMapOf()
 
-    fun insertRoute(origin: String, end: String, price: Int) {
-        routes.compute(origin) { _, old ->
-            val newRoute = end to price
-            old?: return@compute listOf(newRoute)
-
-            old + newRoute
+    companion object {
+        fun with(routes: List<Edge>): RouteManager {
+            val manager = RouteManager()
+            routes.forEach(manager::insertRoute)
+            return manager
         }
     }
 
-    fun findRoute(origin: String, end: String): Pair<Route, Int>? {
-        val distances = mutableMapOf(origin to (origin to 0))
-        val toVisit = mutableSetOf(origin)
-        val visited = mutableSetOf<String>()
+    fun insertRoute(edge: Edge) {
+        insert(edge.point1, edge.point2, edge)
+        insert(edge.point2, edge.point1, edge)
+    }
+
+    fun findRoute(origin: String, end: String): BacktrackPath? {
+        val distances = mutableMapOf(origin to BacktrackPath(origin, 0))
+        val toVisit = routes.keys.toMutableSet()
+
+        if (origin !in toVisit || end !in toVisit)
+            return null
 
         while (toVisit.isNotEmpty()) {
-            val current = toVisit.minBy { distances[it]?.second?: Int.MAX_VALUE }
-                ?: return null
-
-            visited += current
-            toVisit -= current
-
+            val current = toVisit.minBy { distances[it]?.price?: Int.MAX_VALUE }
             val currentData = distances[current]
-                ?: return null
+                ?: break
+
+            toVisit -= currentData.node
 
             if (current == end)
-                return mountRoute(origin, end, distances)?.let { it to currentData.second }
+                return currentData
 
             routes[current]
-                ?.filterNot { it.first in visited }
-                ?.forEach { (next, distance) ->
-                    toVisit += next
-                    distances.updateDistanceFor(next, current, distance + currentData.second)
+                ?.filter { it.key in toVisit }
+                ?.flatMap { (next, edges) -> edges.map { edge -> next to edge } }
+                ?.forEach { (next, edge) ->
+                    distances.updatePathFor(next, edge.price, currentData)
                 }
         }
 
         return null
     }
 
-    private fun MutableMap<String, Edge>.updateDistanceFor(next: String, current: String, distance: Int) {
-        compute(next) { _, old ->
-            val newPath = current to distance
-            old ?: return@compute newPath
+    private fun MutableMap<String, BacktrackPath>.updatePathFor(nextNode: String, nextNodePrice: Int, currentPath: BacktrackPath) {
+        compute(nextNode) { _, oldPath ->
+            val newPath = BacktrackPath(nextNode, nextNodePrice, currentPath)
+            oldPath ?: return@compute newPath
 
-            if (old.second < newPath.second) old
+            if (oldPath.price < newPath.price) oldPath
             else newPath
         }
     }
 
-    private fun mountRoute(start: String, current: String, distances: Map<String, Edge>, tail: Route? = null): Route? {
-        val node = distances[current]
-            ?: return null
-
-        if (current == start) return Route(start, tail)
-
-        return mountRoute(start, node.first, distances, Route(current, tail))
+    private fun insert(origin: String, end: String, edge: Edge) {
+        routes
+            .getOrPut(origin) { mutableMapOf() }
+            .getOrPut(end) { mutableListOf() }
+            .add(edge)
     }
 }
