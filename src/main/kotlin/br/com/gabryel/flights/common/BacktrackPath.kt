@@ -8,6 +8,6 @@ data class BacktrackPath(val node: String, val nodeValue: Int, val next: Backtra
 
     fun getFormattedPath(): String {
         val path = asList().joinToString(" - ")
-        return "$path > $price"
+        return "$path > \$$price"
     }
 }

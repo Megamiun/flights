@@ -51,7 +51,7 @@ class StreamHandlerTest {
 
         assertThat(
             output.toByteArray().toString(Charsets.UTF_8),
-            containsString("Best route: A - B > 1")
+            containsString("Best route: A - B > $1")
         )
     }
 

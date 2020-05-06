@@ -18,6 +18,6 @@ class RouteTest {
     fun `given there are x levels of routes, when asked for their string representation, should concatenate in order`() {
         val route = BacktrackPath("A", 1, BacktrackPath("B", 2, BacktrackPath("C", 3)))
 
-        assertThat(route.getFormattedPath(), `is`("C - B - A > 6"))
+        assertThat(route.getFormattedPath(), `is`("C - B - A > \$6"))
     }
 }

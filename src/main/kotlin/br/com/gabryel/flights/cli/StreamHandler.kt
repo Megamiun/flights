@@ -38,5 +38,5 @@ class StreamHandler(
 
     private fun BacktrackPath?.asString() =
         this?.getFormattedPath()
-            ?: "There is no route between the two points. Could you try again?"
+            ?: "There is no route between the two points. Is there another route you would like to know?"
 }

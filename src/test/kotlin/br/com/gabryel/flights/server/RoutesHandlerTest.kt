@@ -97,7 +97,7 @@ class RoutesHandlerTest {
         assertAll(
             { assertThat("price", response.price, equalTo(1)) },
             { assertThat("path", response.path, hasItems("A", "B")) },
-            { assertThat("formattedPath", response.formattedPath, equalTo("A - B > 1")) }
+            { assertThat("formattedPath", response.formattedPath, equalTo("A - B > \$1")) }
         )
     }
 
@@ -118,7 +118,7 @@ class RoutesHandlerTest {
         assertAll(
             { assertThat("price", response.price, equalTo(1)) },
             { assertThat("path", response.path, hasItems("A", "B")) },
-            { assertThat("formattedPath", response.formattedPath, equalTo("A - B > 1")) }
+            { assertThat("formattedPath", response.formattedPath, equalTo("A - B > \$1")) }
         )
     }
 
@@ -149,7 +149,7 @@ class RoutesHandlerTest {
         val input = """{"origin": "A", "end": "B", "price": 45}"""
         val exchange = createExchange("PUT", "api/routes", requestBodyString = input)
 
-        val routeManager = spy<RouteManager>()
+        val routeManager = mock<RouteManager>()
         RoutesHandler(routeManager).handle(exchange)
 
         verify(routeManager).insertRoute(Edge("A", "B", 45))
